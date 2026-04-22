@@ -46,3 +46,6 @@ assets/exports/
 # CustomTkinter / Tkinter
 *.db
 *.log
+
+# Config (OpenCode agent)
+.config/
