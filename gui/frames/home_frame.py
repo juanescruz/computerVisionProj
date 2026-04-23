@@ -2,8 +2,19 @@
 import customtkinter as ctk
 from tkinter import filedialog
 import cv2
+import numpy as np
+import os
 
 from gui.utils import convert_cv_to_ctk, plot_histogram
+
+RAW_SIZES = {
+    "GIRL.RAW": (164, 389),
+    "BARCO.RAW": (207, 290),
+    "LENA.RAW": (256, 256),
+    "LENAX.RAW": (256, 256),
+    "GIRL2.RAW": (256, 256),
+    "FRACTAL.RAW": (200, 200),
+}
 
 
 class HomeFrame(ctk.CTkFrame):
@@ -36,17 +47,33 @@ class HomeFrame(ctk.CTkFrame):
     
     def load_image(self):
         filepath = filedialog.askopenfilename(
-            filetypes=[("Images", "*.png *.jpg *.bmp"), ("All files", "*.*")]
+            filetypes=[("Images", "*.png *.jpg *.bmp *.raw *.tif *.tiff"), ("All files", "*.*")]
         )
+
         if filepath:
             try:
-                img = cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)
+                filename = os.path.basename(filepath).upper()
+
+                if filepath.lower().endswith(".raw"):
+                    if filename not in RAW_SIZES:
+                        raise ValueError("Unknown dimensions for this .raw file")
+
+                    height, width = RAW_SIZES[filename]
+
+                    img = np.fromfile(filepath, dtype=np.uint8)
+                    img = img.reshape((height, width))
+
+                else:
+                    img = cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)
+
                 if img is None:
                     raise ValueError("Cannot decode image")
+
                 self.app.current_image = img
                 self.app.processed_image = None
-                self.status_label.configure(text=f"Cargado: {filepath.split('/')[-1]}")
+                self.status_label.configure(text=f"Cargado: {filename}")
                 self.update_display()
+
             except Exception as e:
                 self.status_label.configure(text=f"Error: {str(e)}")
     
