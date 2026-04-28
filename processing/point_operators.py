@@ -9,10 +9,10 @@ def gamma_correction(img: np.ndarray, gamma: float) -> np.ndarray:
     
     I_out = I_in^gamma * 255^(1-gamma)
     """
-    img_float = img.astype(np.float64) / 255.0
-    result = np.power(img_float, gamma)
-    result = result * np.power(255.0, 1 - gamma)
-    result = np.clip(result * 255.0, 0, 255).astype(np.uint8)
+    img_norm = img.astype(np.float64) / 255.0
+    img_gamma = np.power(img_norm, gamma)
+    result = (img_gamma * 255.0).clip(0, 255).astype(np.uint8)
+
     return result
 
 
