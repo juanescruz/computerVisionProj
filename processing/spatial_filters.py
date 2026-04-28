@@ -153,27 +153,29 @@ def gaussian_filter(img: np.ndarray, sigma: float) -> np.ndarray:
     - imagen filtrada uint8.
     """
     kernel = gaussian_kernel(sigma)
-    return manual_convolution(img, kernel)
+    return manual_convolution(img, kernel)    
 
-
-def edge_enhancement_filter(img: np.ndarray) -> np.ndarray:
+def edge_enhancement_filter(img: np.ndarray, ksize: int = 3, kernel: np.ndarray = None) -> np.ndarray:
     """Realce de bordes. Apunte págs. 36-37.
     
-    Kernel:
+    Ejemplo de kernel por defecto (ksize = 3):
     [-1, -1, -1]
     [-1,  9, -1]
-    [-1, -1, -1]
+    [-1, -1, -1]    
     
     Parámetros:
-    - img: imagen de entrada uint8.
-    
+    - img: imagen de entrada (uint8).
+    - ksize: tamaño del kernel (debe ser impar, ej: 3, 5, 7...).
+    - kernel: kernel personalizado opcional (sobrescribe el automático).
+
     Retorna:
-    - imagen con bordes realzados uint8.
+    - imagen con bordes realzados (uint8).
     """
-    kernel = np.array([
-        [-1, -1, -1],
-        [-1,  9, -1],
-        [-1, -1, -1]
-    ], dtype=np.float32)
     
+    if kernel is None:
+        kernel = -1 * np.ones((ksize, ksize), dtype=np.float32)
+
+        center = ksize // 2
+        kernel[center, center] = ksize * ksize - 1
+
     return manual_convolution(img, kernel)

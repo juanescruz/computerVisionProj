@@ -107,8 +107,14 @@ class SpatialFiltersFrame(ctk.CTkFrame):
             self.param2_label.grid()
             self.param2_entry.grid()
         elif selection == "Realce":
-            self.param1_label.grid_remove()
-            self.param1_entry.grid_remove()
+            self.param1_label.grid()
+            self.param1_entry.grid()
+
+            self.param1_label.configure(text="Tamaño kernel (ímpar):")
+
+            self.param1_entry.delete(0, "end")
+            self.param1_entry.insert(0, "3")
+
             self.param2_label.grid_remove()
             self.param2_entry.grid_remove()
     
@@ -158,7 +164,22 @@ class SpatialFiltersFrame(ctk.CTkFrame):
             self.app.processed_image = gaussian_filter(self.app.current_image, sigma)
         
         elif filter_type == "Realce":
-            self.app.processed_image = edge_enhancement_filter(self.app.current_image)
+            try:
+                k = int(self.param1_entry.get())
+
+                if k % 2 == 0:
+                    raise ValueError("El tamaño del kernel debe ser impar.")
+
+                k = max(3, k)
+
+            except ValueError as e:
+                self._show_warning(str(e))
+                return
+
+            self.app.processed_image = edge_enhancement_filter(
+                self.app.current_image,
+                ksize=k
+            )
         
         self.update_display()
     
