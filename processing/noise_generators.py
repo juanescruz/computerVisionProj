@@ -5,7 +5,7 @@ import numpy as np
 
 
 def generate_gaussian(n_samples: int, mean: float, sigma: float) -> np.ndarray:
-    """Genera n_samples con distribución Gaussiana. Apunte pág. 16.
+    """Genera n_samples con distribución Gaussiana. 
     
     Uses Box-Muller transform or np.random.normal.
     """
@@ -13,7 +13,7 @@ def generate_gaussian(n_samples: int, mean: float, sigma: float) -> np.ndarray:
 
 
 def generate_exponential(n_samples: int, lam: float) -> np.ndarray:
-    """Genera n_samples con distribución Exponencial usando transformada inversa. Apunte págs. 11-12.
+    """Genera n_samples con distribución Exponencial usando transformada inversa.
     
     PDF: f(x) = lambda * exp(-lambda * x) for x >= 0
     CDF: F(x) = 1 - exp(-lambda * x)

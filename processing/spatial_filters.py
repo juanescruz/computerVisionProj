@@ -31,7 +31,7 @@ def manual_convolution(img: np.ndarray, kernel: np.ndarray) -> np.ndarray:
 
 
 def manual_median_filter(img: np.ndarray, kernel_size: int) -> np.ndarray:
-    """Filtro de mediana. Apunte pág. 30.
+    """Filtro de mediana.
     
     Parámetros:
     - img: imagen de entrada uint8.
@@ -55,7 +55,7 @@ def manual_median_filter(img: np.ndarray, kernel_size: int) -> np.ndarray:
 
 
 def mean_filter(img: np.ndarray, kernel_size: int) -> np.ndarray:
-    """Filtro de media. Apunte pág. 22.
+    """Filtro de media.
     
     Parámetros:
     - img: imagen de entrada uint8.
@@ -75,7 +75,7 @@ def median_filter(img: np.ndarray, kernel_size: int) -> np.ndarray:
 
 
 def weighted_median_filter(img: np.ndarray, weights: np.ndarray = None) -> np.ndarray:
-    """Filtro de mediana ponderada. Apunte pág. 34.
+    """Filtro de mediana ponderada. 
     
     Parámetros:
     - img: imagen de entrada uint8.
@@ -116,7 +116,7 @@ def weighted_median_filter(img: np.ndarray, weights: np.ndarray = None) -> np.nd
 
 
 def gaussian_kernel(sigma: float) -> np.ndarray:
-    """Genera kernel Gaussiano 2D. Apunte págs. 25-28.
+    """Genera kernel Gaussiano 2D. 
     
     Parámetros:
     - sigma: desviación estándar.
@@ -143,7 +143,7 @@ def gaussian_kernel(sigma: float) -> np.ndarray:
 
 
 def gaussian_filter(img: np.ndarray, sigma: float) -> np.ndarray:
-    """Filtro Gaussiano. Apunte págs. 25-28.
+    """Filtro Gaussiano. 
     
     Parámetros:
     - img: imagen de entrada uint8.
@@ -156,7 +156,7 @@ def gaussian_filter(img: np.ndarray, sigma: float) -> np.ndarray:
     return manual_convolution(img, kernel)    
 
 def edge_enhancement_filter(img: np.ndarray, ksize: int = 3, kernel: np.ndarray = None) -> np.ndarray:
-    """Realce de bordes. Apunte págs. 36-37.
+    """Realce de bordes. 
     
     Ejemplo de kernel por defecto (ksize = 3):
     [-1, -1, -1]
