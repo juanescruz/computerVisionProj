@@ -13,6 +13,7 @@ from gui.frames.noise_generator_frame import NoiseGeneratorFrame
 from gui.frames.contamination_frame import ContaminationFrame
 from gui.frames.spatial_filters_frame import SpatialFiltersFrame
 from gui.frames.experimentation_frame import ExperimentationFrame
+from gui.frames.edge_detection_frame import EdgeDetectionFrame
 
 
 class App(ctk.CTk):
@@ -38,6 +39,7 @@ class App(ctk.CTk):
         self.tab_contamination = self.tabview.add("Contaminar")
         self.tab_filters = self.tabview.add("Filtros")
         self.tab_experimentation = self.tabview.add("Experimentación")
+        self.tab_edge_detection = self.tabview.add("Detección de Bordes")
         
         self.frames = {}
         self.frames["home"] = HomeFrame(self.tab_home, self)
@@ -50,6 +52,7 @@ class App(ctk.CTk):
         self.frames["contamination"] = ContaminationFrame(self.tab_contamination, self)
         self.frames["filters"] = SpatialFiltersFrame(self.tab_filters, self)
         self.frames["experimentation"] = ExperimentationFrame(self.tab_experimentation, self)
+        self.frames["edge_detection"] = EdgeDetectionFrame(self.tab_edge_detection, self)
         
         for frame in self.frames.values():
             frame.pack(fill="both", expand=True)
