@@ -67,3 +67,169 @@ def sobel_operator(img: np.ndarray) -> np.ndarray:
     gy = convolve2d(img, kernel_y)
 
     return gradient_magnitude(gx, gy)
+
+
+def prewitt_operator_channel(channel: np.ndarray) -> np.ndarray:
+    """Apply Prewitt to a single channel."""
+    kernel_x = np.array([[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]])
+    kernel_y = np.array([[-1, -1, -1], [0, 0, 0], [1, 1, 1]])
+    gx = convolve2d(channel, kernel_x)
+    gy = convolve2d(channel, kernel_y)
+    return gradient_magnitude(gx, gy)
+
+
+def sobel_operator_channel(channel: np.ndarray) -> np.ndarray:
+    """Apply Sobel to a single channel."""
+    kernel_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
+    kernel_y = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
+    gx = convolve2d(channel, kernel_x)
+    gy = convolve2d(channel, kernel_y)
+    return gradient_magnitude(gx, gy)
+
+
+def prewitt_color(img: np.ndarray, method: str = "euclidean") -> np.ndarray:
+    """Prewitt edge detector on RGB. Returns RGB image with colored edges.
+    
+    Each channel processed independently; result stacked as RGB.
+    method: 'euclidean' normalizes by global max across channels.
+    Falls back to prewitt_operator if grayscale.
+    """
+    if len(img.shape) != 3 or img.shape[2] != 3:
+        return prewitt_operator(img)
+
+    mag_R = prewitt_operator(img[:, :, 0])
+    mag_G = prewitt_operator(img[:, :, 1])
+    mag_B = prewitt_operator(img[:, :, 2])
+
+    if method == "euclidean":
+        max_val = max(mag_R.max(), mag_G.max(), mag_B.max())
+        if max_val > 0:
+            mag_R = (mag_R.astype(np.float32) / max_val * 255).astype(np.uint8)
+            mag_G = (mag_G.astype(np.float32) / max_val * 255).astype(np.uint8)
+            mag_B = (mag_B.astype(np.float32) / max_val * 255).astype(np.uint8)
+
+    return np.stack([mag_R, mag_G, mag_B], axis=2).astype(np.uint8)
+
+
+def sobel_color(img: np.ndarray, method: str = "euclidean") -> np.ndarray:
+    """Sobel edge detector on RGB. Returns RGB image with colored edges.
+    
+    Each channel processed independently; result stacked as RGB.
+    method: 'euclidean' normalizes by global max across channels.
+    Falls back to sobel_operator if grayscale.
+    """
+    if len(img.shape) != 3 or img.shape[2] != 3:
+        return sobel_operator(img)
+
+    mag_R = sobel_operator(img[:, :, 0])
+    mag_G = sobel_operator(img[:, :, 1])
+    mag_B = sobel_operator(img[:, :, 2])
+
+    if method == "euclidean":
+        max_val = max(mag_R.max(), mag_G.max(), mag_B.max())
+        if max_val > 0:
+            mag_R = (mag_R.astype(np.float32) / max_val * 255).astype(np.uint8)
+            mag_G = (mag_G.astype(np.float32) / max_val * 255).astype(np.uint8)
+            mag_B = (mag_B.astype(np.float32) / max_val * 255).astype(np.uint8)
+
+    return np.stack([mag_R, mag_G, mag_B], axis=2).astype(np.uint8)
+
+
+def _to_gray(img):
+    if len(img.shape) == 3:
+        return (0.299 * img[:, :, 0] + 0.587 * img[:, :, 1] + 0.114 * img[:, :, 2]).astype(np.uint8)
+    return img
+
+
+def laplacian_zero_crossings(img: np.ndarray) -> np.ndarray:
+    """Laplacian edge detector using zero-crossing detection.
+    
+    Kernel: [[0,1,0],[1,-4,1],[0,1,0]]
+    Edge = pixel with N/S/E/O neighbor of opposite sign.
+    """
+    img = _to_gray(img)
+    kernel = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]], dtype=np.float32)
+    lap = convolve2d(img, kernel)
+
+    h, w = lap.shape
+    edges = np.zeros((h, w), dtype=np.uint8)
+
+    for i in range(1, h - 1):
+        for j in range(1, w - 1):
+            v = lap[i, j]
+            if (v > 0 and lap[i - 1, j] < 0) or (v < 0 and lap[i - 1, j] > 0) or \
+               (v > 0 and lap[i + 1, j] < 0) or (v < 0 and lap[i + 1, j] > 0) or \
+               (v > 0 and lap[i, j - 1] < 0) or (v < 0 and lap[i, j - 1] > 0) or \
+               (v > 0 and lap[i, j + 1] < 0) or (v < 0 and lap[i, j + 1] > 0):
+                edges[i, j] = 255
+    return edges
+
+
+def laplacian_with_slope(img: np.ndarray, threshold: int = 30) -> np.ndarray:
+    """Laplacian with slope threshold.
+    
+    Zero-crossing marked only if |lap[i,j] + lap[neighbor]| > threshold.
+    """
+    img = _to_gray(img)
+    kernel = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]], dtype=np.float32)
+    lap = convolve2d(img, kernel)
+
+    h, w = lap.shape
+    edges = np.zeros((h, w), dtype=np.uint8)
+
+    for i in range(1, h - 1):
+        for j in range(1, w - 1):
+            v = lap[i, j]
+            for di, dj in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                ni, nj = i + di, j + dj
+                nv = lap[ni, nj]
+                if (v > 0 and nv < 0) or (v < 0 and nv > 0):
+                    slope = abs(v + nv)
+                    if slope > threshold:
+                        edges[i, j] = 255
+                    break
+    return edges
+
+
+def log_edge(img: np.ndarray, sigma: float = 1.0, threshold: int = None) -> np.ndarray:
+    """LoG (Marr-Hildreth) edge detector.
+    
+    Build LoG kernel of size 4σ+1 (odd), convolve, zero-crossing detection.
+    If threshold is set, only mark zero-crossings with slope > threshold.
+    """
+    img = _to_gray(img)
+
+    size = int(4 * sigma + 1)
+    if size % 2 == 0:
+        size += 1
+    k = size // 2
+
+    kernel = np.zeros((size, size), dtype=np.float32)
+    s2 = sigma * sigma
+    s4 = s2 * s2
+    for x in range(-k, k + 1):
+        for y in range(-k, k + 1):
+            r2 = x * x + y * y
+            kernel[x + k, y + k] = ((r2 - 2 * s2) / s4) * np.exp(-r2 / (2 * s2))
+    kernel = kernel - kernel.mean()
+
+    log_img = convolve2d(img, kernel)
+
+    h, w = log_img.shape
+    edges = np.zeros((h, w), dtype=np.uint8)
+
+    for i in range(1, h - 1):
+        for j in range(1, w - 1):
+            v = log_img[i, j]
+            for di, dj in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                ni, nj = i + di, j + dj
+                nv = log_img[ni, nj]
+                if (v > 0 and nv < 0) or (v < 0 and nv > 0):
+                    if threshold is None:
+                        edges[i, j] = 255
+                    else:
+                        slope = abs(v + nv)
+                        if slope > threshold:
+                            edges[i, j] = 255
+                    break
+    return edges

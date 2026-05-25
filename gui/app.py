@@ -14,6 +14,11 @@ from gui.frames.contamination_frame import ContaminationFrame
 from gui.frames.spatial_filters_frame import SpatialFiltersFrame
 from gui.frames.experimentation_frame import ExperimentationFrame
 from gui.frames.edge_detection_frame import EdgeDetectionFrame
+from gui.frames.edge_noise_frame import EdgeNoiseFrame
+from gui.frames.laplacian_frame import LaplacianFrame
+from gui.frames.diffusion_frame import DiffusionFrame
+from gui.frames.bilateral_frame import BilateralFrame
+from gui.frames.thresholding_auto_frame import ThresholdingAutoFrame
 
 
 class App(ctk.CTk):
@@ -24,6 +29,7 @@ class App(ctk.CTk):
         self.geometry("1200x800")
         
         self.current_image = None
+        self.current_image_color = None
         self.processed_image = None
         
         self.tabview = ctk.CTkTabview(self)
@@ -40,6 +46,11 @@ class App(ctk.CTk):
         self.tab_filters = self.tabview.add("Filtros")
         self.tab_experimentation = self.tabview.add("Experimentación")
         self.tab_edge_detection = self.tabview.add("Detección de Bordes")
+        self.tab_edge_noise = self.tabview.add("Ruido + Bordes")
+        self.tab_laplacian = self.tabview.add("Laplaciano con Ruido")
+        self.tab_diffusion = self.tabview.add("Difusión")
+        self.tab_bilateral = self.tabview.add("Filtro Bilateral")
+        self.tab_thresholding_auto = self.tabview.add("Umbralización Automática")
         
         self.frames = {}
         self.frames["home"] = HomeFrame(self.tab_home, self)
@@ -53,6 +64,11 @@ class App(ctk.CTk):
         self.frames["filters"] = SpatialFiltersFrame(self.tab_filters, self)
         self.frames["experimentation"] = ExperimentationFrame(self.tab_experimentation, self)
         self.frames["edge_detection"] = EdgeDetectionFrame(self.tab_edge_detection, self)
+        self.frames["edge_noise"] = EdgeNoiseFrame(self.tab_edge_noise, self)
+        self.frames["laplacian"] = LaplacianFrame(self.tab_laplacian, self)
+        self.frames["diffusion"] = DiffusionFrame(self.tab_diffusion, self)
+        self.frames["bilateral"] = BilateralFrame(self.tab_bilateral, self)
+        self.frames["thresholding_auto"] = ThresholdingAutoFrame(self.tab_thresholding_auto, self)
         
         for frame in self.frames.values():
             frame.pack(fill="both", expand=True)
@@ -62,16 +78,27 @@ class App(ctk.CTk):
     def load_image(self, filepath: str):
         """Load image from file path."""
         import cv2
-        img = cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)
-        if img is None:
+        img_color = cv2.imread(filepath, cv2.IMREAD_COLOR)
+        if img_color is None:
             raise ValueError(f"Cannot load image: {filepath}")
-        self.current_image = img
+        img_color = cv2.cvtColor(img_color, cv2.COLOR_BGR2RGB)
+        img_gray = cv2.cvtColor(img_color, cv2.COLOR_RGB2GRAY)
+        self.current_image = img_gray
+        self.current_image_color = img_color
         self.processed_image = None
         
         for frame in self.frames.values():
             if hasattr(frame, 'update_display'):
                 frame.update_display()
     
-    def get_current_image(self) -> np.ndarray:
-        """Return current image (original or processed)."""
-        return self.processed_image if self.processed_image is not None else self.current_image
+    def get_current_image(self, mode="gray") -> np.ndarray:
+        """Return current image.
+        
+        mode: 'gray' (default) or 'color'.
+        If processed_image exists, return it (always grayscale).
+        """
+        if self.processed_image is not None:
+            return self.processed_image
+        if mode == "color" and self.current_image_color is not None:
+            return self.current_image_color
+        return self.current_image

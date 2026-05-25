@@ -62,14 +62,19 @@ class HomeFrame(ctk.CTkFrame):
 
                     img = np.fromfile(filepath, dtype=np.uint8)
                     img = img.reshape((height, width))
+                    self.app.current_image = img
+                    self.app.current_image_color = None
 
                 else:
-                    img = cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)
+                    img_color = cv2.imread(filepath, cv2.IMREAD_COLOR)
+                    img_color = cv2.cvtColor(img_color, cv2.COLOR_BGR2RGB)
+                    img_gray = cv2.cvtColor(img_color, cv2.COLOR_RGB2GRAY)
+                    self.app.current_image = img_gray
+                    self.app.current_image_color = img_color
 
-                if img is None:
+                if self.app.current_image is None:
                     raise ValueError("Cannot decode image")
 
-                self.app.current_image = img
                 self.app.processed_image = None
                 self.status_label.configure(text=f"Cargado: {filename}")
                 self.update_display()

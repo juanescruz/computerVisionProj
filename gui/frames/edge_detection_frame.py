@@ -1,9 +1,12 @@
 """Edge detection frame."""
 import customtkinter as ctk
+import numpy as np
 
 from processing.edge_detection import (
     prewitt_operator,
-    sobel_operator
+    sobel_operator,
+    prewitt_color,
+    sobel_color
 )
 
 from gui.utils import (
@@ -53,6 +56,20 @@ class EdgeDetectionFrame(ctk.CTkFrame):
         )
         self.btn_reset.pack(side="left", padx=5)
 
+        self.mode_label = ctk.CTkLabel(
+            self.button_frame, text="Modo:"
+        )
+        self.mode_label.pack(side="left", padx=(10, 2))
+
+        self.mode_var = ctk.StringVar(value="Grises")
+        self.mode_menu = ctk.CTkOptionMenu(
+            self.button_frame,
+            values=["Grises", "Color (Euclidiano)", "Color (Máximo)"],
+            variable=self.mode_var,
+            width=140
+        )
+        self.mode_menu.pack(side="left", padx=5)
+
         self.comparison_frame = ctk.CTkFrame(self)
         self.comparison_frame.pack(
             fill="both",
@@ -100,11 +117,12 @@ class EdgeDetectionFrame(ctk.CTkFrame):
         )
         self.proc_label.pack(pady=5)
 
-        ctk.CTkLabel(
+        self.proc_title = ctk.CTkLabel(
             self.right_frame,
             text="Bordes",
             font=("Arial", 12)
-        ).pack(pady=2)
+        )
+        self.proc_title.pack(pady=2)
 
         self.hist_orig_frame = ctk.CTkFrame(
             self.left_frame
@@ -127,42 +145,79 @@ class EdgeDetectionFrame(ctk.CTkFrame):
         self.hist_orig_canvas = None
         self.hist_proc_canvas = None
 
-    def apply_prewitt(self):
-
+    def _select_operator(self, operator_fn, color_fn):
         if self.app.current_image is None:
             return
 
-        img = self.app.get_current_image()
+        mode = self.mode_var.get()
 
-        self.app.processed_image = prewitt_operator(img)
+        if mode == "Grises":
+            img = self.app.get_current_image(mode="gray")
+            self.app.processed_image = operator_fn(img)
+        else:
+            img = self.app.get_current_image(mode="color")
+            if img is None or len(img.shape) != 3:
+                import tkinter.messagebox as msgbox
+                msgbox.showwarning("Advertencia", "No hay imagen color cargada.")
+                return
+            method = "euclidean" if mode == "Color (Euclidiano)" else "max"
+            self.app.processed_image = color_fn(img, method=method)
 
         self.update_display()
+
+    def apply_prewitt(self):
+        self._select_operator(prewitt_operator, prewitt_color)
 
     def apply_sobel(self):
-
-        if self.app.current_image is None:
-            return
-
-        img = self.app.get_current_image()
-
-        self.app.processed_image = sobel_operator(img)
-
-        self.update_display()
+        self._select_operator(sobel_operator, sobel_color)
         
     def reset_image(self):
 
         self.app.processed_image = None
         self.update_display()
 
+    def plot_rgb_histogram(self, img, parent_frame):
+        """Histograma RGB con 3 canales superpuestos."""
+        from matplotlib.figure import Figure
+        from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
+        R = img[:, :, 0].ravel()
+        G = img[:, :, 1].ravel()
+        B = img[:, :, 2].ravel()
+
+        fig = Figure(figsize=(3, 2.5), dpi=80)
+        ax = fig.add_subplot(111)
+        ax.hist(R, bins=256, range=(0, 255), color='red', alpha=0.5, label='R')
+        ax.hist(G, bins=256, range=(0, 255), color='green', alpha=0.5, label='G')
+        ax.hist(B, bins=256, range=(0, 255), color='blue', alpha=0.5, label='B')
+        ax.set_xlim(0, 255)
+        ax.set_xlabel("Intensidad", fontsize=8)
+        ax.set_ylabel("Frecuencia", fontsize=8)
+        ax.legend(loc='upper right', fontsize=7)
+        fig.tight_layout()
+
+        canvas = FigureCanvasTkAgg(fig, master=parent_frame)
+        canvas.draw()
+        return canvas
+
     def update_display(self):
 
-        orig_img = self.app.current_image
+        mode = self.mode_var.get()
+        is_color_mode = mode != "Grises" and self.app.current_image_color is not None
 
-        proc_img = self.app.get_current_image()
+        if is_color_mode:
+            orig_img = self.app.current_image_color
+        else:
+            orig_img = self.app.current_image
+
+        proc_img = self.app.processed_image
 
         if orig_img is not None:
 
-            h, w = orig_img.shape
+            if len(orig_img.shape) == 3:
+                h, w, _ = orig_img.shape
+            else:
+                h, w = orig_img.shape
 
             orig_ctk = convert_cv_to_ctk(
                 orig_img,
@@ -179,10 +234,10 @@ class EdgeDetectionFrame(ctk.CTkFrame):
             if self.hist_orig_canvas:
                 self.hist_orig_canvas.get_tk_widget().destroy()
 
-            canvas_orig = plot_histogram(
-                orig_img,
-                self.hist_orig_frame
-            )
+            if is_color_mode:
+                canvas_orig = self.plot_rgb_histogram(orig_img, self.hist_orig_frame)
+            else:
+                canvas_orig = plot_histogram(orig_img, self.hist_orig_frame)
 
             canvas_orig.get_tk_widget().pack(
                 fill="both",
@@ -191,9 +246,14 @@ class EdgeDetectionFrame(ctk.CTkFrame):
 
             self.hist_orig_canvas = canvas_orig
 
+        self.proc_title.configure(
+            text="Bordes Color" if is_color_mode else "Bordes"
+        )
+
         if proc_img is not None:
 
-            h, w = proc_img.shape
+            is_proc_color = len(proc_img.shape) == 3
+            h, w = proc_img.shape[:2]
 
             proc_ctk = convert_cv_to_ctk(
                 proc_img,
@@ -210,10 +270,10 @@ class EdgeDetectionFrame(ctk.CTkFrame):
             if self.hist_proc_canvas:
                 self.hist_proc_canvas.get_tk_widget().destroy()
 
-            canvas_proc = plot_histogram(
-                proc_img,
-                self.hist_proc_frame
-            )
+            if is_proc_color:
+                canvas_proc = self.plot_rgb_histogram(proc_img, self.hist_proc_frame)
+            else:
+                canvas_proc = plot_histogram(proc_img, self.hist_proc_frame)
 
             canvas_proc.get_tk_widget().pack(
                 fill="both",

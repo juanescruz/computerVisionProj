@@ -16,7 +16,7 @@ def convert_cv_to_ctk(img: np.ndarray, size=None) -> ctk.CTkImage:
     if len(img.shape) == 2:
         img_rgb = np.stack([img, img, img], axis=-1)
     else:
-        img_rgb = img[:, :, ::-1]
+        img_rgb = img
     
     img_pil = Image.fromarray(img_rgb.astype('uint8'), mode='RGB')
     
