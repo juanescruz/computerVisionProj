@@ -41,7 +41,7 @@ def add_noise(img: np.ndarray, noise_generator_func, percentage: float,
 
 
 def add_gaussian_noise(img: np.ndarray, percentage: float, mean: float, sigma: float) -> np.ndarray:
-    """Aplica ruido Gaussiano aditivo. Apunte pág. 17.
+    """Aplica ruido Gaussiano aditivo.
     
     Ruido: n = normal(μ, σ)
     Imagen contaminada: I'(x,y) = I(x,y) + n
@@ -51,7 +51,7 @@ def add_gaussian_noise(img: np.ndarray, percentage: float, mean: float, sigma: f
 
 
 def add_exponential_noise(img: np.ndarray, percentage: float, lam: float) -> np.ndarray:
-    """Aplica ruido Exponencial multiplicativo. Apunte pág. 14.
+    """Aplica ruido Exponencial multiplicativo.
     
     Ruido: n = exp(λ)
     Imagen contaminada: I'(x,y) = I(x,y) * n
@@ -71,7 +71,7 @@ def add_rayleigh_noise(img: np.ndarray, percentage: float, xi: float) -> np.ndar
 
 
 def add_salt_pepper_noise(img: np.ndarray, p: float) -> np.ndarray:
-    """Aplica ruido Sal y Pimienta a la imagen. Apunte pág. 19.
+    """Aplica ruido Sal y Pimienta a la imagen. 
     
     Parámetros:
     - img: imagen original en uint8 (0-255).

@@ -5,7 +5,7 @@ import numpy as np
 
 
 def gamma_correction(img: np.ndarray, gamma: float) -> np.ndarray:
-    """Aplica corrección gamma. Apunte pág. 8.
+    """Aplica corrección gamma. 
     
     I_out = I_in^gamma * 255^(1-gamma)
     """
@@ -17,7 +17,7 @@ def gamma_correction(img: np.ndarray, gamma: float) -> np.ndarray:
 
 
 def negative(img: np.ndarray) -> np.ndarray:
-    """Negativo de imagen. Apunte pág. 13.
+    """Negativo de imagen. 
     
     I_out = 255 - I_in
     """
@@ -25,7 +25,7 @@ def negative(img: np.ndarray) -> np.ndarray:
 
 
 def calc_histogram(img: np.ndarray) -> np.ndarray:
-    """Calcula histograma normalizado. Apunte pág. 18.
+    """Calcula histograma normalizado. 
     
     Returns array of 256 frequency values (relative).
     """
@@ -36,7 +36,7 @@ def calc_histogram(img: np.ndarray) -> np.ndarray:
 
 
 def threshold(img: np.ndarray, u: int) -> np.ndarray:
-    """Umbralización binaria. Apunte pág. 11.
+    """Umbralización binaria. 
     
     I_out = 0 if I_in < u else 255
     """
@@ -44,7 +44,7 @@ def threshold(img: np.ndarray, u: int) -> np.ndarray:
 
 
 def histogram_equalization(img: np.ndarray) -> np.ndarray:
-    """Ecualización de histograma. Apunte págs. 22-26.
+    """Ecualización de histograma. 
     
     Fórmula discreta:
     - n_k = histograma[k]
