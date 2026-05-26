@@ -138,7 +138,6 @@ def sobel_color(img: np.ndarray, method: str = "euclidean") -> np.ndarray:
 def _to_gray(img):
     if len(img.shape) == 3:
         return np.mean(img, axis=2).astype(np.uint8)
-
     return img
 
 
@@ -148,61 +147,30 @@ def laplacian_zero_crossings(img: np.ndarray) -> np.ndarray:
     img = _to_gray(img)
     kernel = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]], dtype=np.float32)
     lap = convolve2d(img, kernel)
-
-    h, w = lap.shape
-    edges = np.zeros((h, w), dtype=np.uint8)
-
-    for i in range(1, h - 1):
-        for j in range(1, w - 1):
-            v = lap[i, j]
-            n = lap[i - 1, j]; s = lap[i + 1, j]
-            e = lap[i, j + 1]; o = lap[i, j - 1]
-
-            if v > 0 and (n < 0 or s < 0 or e < 0 or o < 0):
-                edges[i, j] = 255
-            elif v < 0 and (n > 0 or s > 0 or e > 0 or o > 0):
-                edges[i, j] = 255
-            elif v == 0:
-                if (n > 0 and s < 0) or (n < 0 and s > 0):
-                    edges[i, j] = 255
-                elif (e > 0 and o < 0) or (e < 0 and o > 0):
-                    edges[i, j] = 255
-    return edges
+    lap = np.abs(lap)
+    lap = np.clip(lap, 0, 255)
+    return lap.astype(np.uint8)
 
 
 def laplacian_with_slope(img: np.ndarray, threshold: float = None) -> np.ndarray:
     """Laplacian with slope evaluation. Umbral automático si threshold=None."""
     img = _to_gray(img)
-    kernel = np.array([[0, 1, 0], [1, -8, 1], [0, 1, 0]], dtype=np.float32)
+    kernel = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]], dtype=np.float32)
     lap = convolve2d(img, kernel)
 
+    slope = np.abs(lap)
+
+    edges = np.zeros_like(img)
+    
     if threshold is None:
         abs_lap = np.abs(lap)
         threshold = float(np.percentile(abs_lap, 80) * 0.25)
         if threshold < 1:
             threshold = 1.0
 
-    h, w = lap.shape
-    edges = np.zeros((h, w), dtype=np.uint8)
+    edges[slope > threshold] = 255
 
-    for i in range(1, h - 1):
-        for j in range(1, w - 1):
-            v = lap[i, j]
-
-            neighbors = [
-                lap[i, j + 1],     # Horizontal
-                lap[i + 1, j],     # Vertical
-                lap[i + 1, j + 1], # Diagonal 1
-                lap[i + 1, j - 1]  # Diagonal 2
-            ]
-
-            for neighbor_val in neighbors:
-                if (v * neighbor_val) < 0:
-                    slope = abs(v - neighbor_val)
-                    if slope >= threshold:
-                        edges[i, j] = 255
-                    break
-    return edges
+    return edges.astype(np.uint8)
 
 
 def log_edge(img: np.ndarray, sigma: float = 1.0, threshold: float = None) -> np.ndarray:
