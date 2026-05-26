@@ -143,34 +143,89 @@ def _to_gray(img):
 
 
 def laplacian_zero_crossings(img: np.ndarray) -> np.ndarray:
-    """Laplacian zero-crossing detector (sin umbral fijo)."""
     img = _to_gray(img)
-    kernel = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]], dtype=np.float32)
-    lap = convolve2d(img, kernel)
-    lap = np.abs(lap)
-    lap = np.clip(lap, 0, 255)
-    return lap.astype(np.uint8)
 
+    kernel = np.array([
+        [0, 1, 0],
+        [1, -4, 1],
+        [0, 1, 0]
+    ], dtype=np.float32)
 
-def laplacian_with_slope(img: np.ndarray, threshold: float = None) -> np.ndarray:
-    """Laplacian with slope evaluation. Umbral automático si threshold=None."""
-    img = _to_gray(img)
-    kernel = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]], dtype=np.float32)
     lap = convolve2d(img, kernel)
 
-    slope = np.abs(lap)
+    rows, cols = lap.shape
+    edges = np.zeros((rows, cols), dtype=np.uint8)
 
-    edges = np.zeros_like(img)
-    
+    for i in range(1, rows - 1):
+        for j in range(1, cols - 1):
+
+            center = lap[i, j]
+
+            neighbors = [
+                lap[i-1, j],
+                lap[i+1, j],
+                lap[i, j-1],
+                lap[i, j+1]
+            ]
+
+            for n in neighbors:
+
+                # verifica troca de sinal
+                if center * n < 0:
+                    edges[i, j] = 255
+                    break
+
+    return edges
+
+
+def laplacian_with_slope(img: np.ndarray,
+                         threshold: float = None) -> np.ndarray:
+
+    img = _to_gray(img)
+
+    kernel = np.array([
+        [0, 1, 0],
+        [1, -4, 1],
+        [0, 1, 0]
+    ], dtype=np.float32)
+
+    lap = convolve2d(img, kernel)
+
+    rows, cols = lap.shape
+    edges = np.zeros((rows, cols), dtype=np.uint8)
+
+    # threshold automático
     if threshold is None:
-        abs_lap = np.abs(lap)
-        threshold = float(np.percentile(abs_lap, 80) * 0.25)
+        threshold = np.percentile(np.abs(lap), 80) * 0.25
+
         if threshold < 1:
             threshold = 1.0
 
-    edges[slope > threshold] = 255
+    for i in range(1, rows - 1):
+        for j in range(1, cols - 1):
 
-    return edges.astype(np.uint8)
+            center = lap[i, j]
+
+            neighbors = [
+                lap[i-1, j],
+                lap[i+1, j],
+                lap[i, j-1],
+                lap[i, j+1]
+            ]
+
+            for n in neighbors:
+
+                # verifica troca de sinal
+                sign_change = center * n < 0
+
+                # calcula slope
+                slope = abs(center - n)
+
+                if sign_change and slope > threshold:
+                    edges[i, j] = 255
+                    break
+
+    return edges
 
 
 def log_edge(img: np.ndarray, sigma: float = 1.0, threshold: float = None) -> np.ndarray:
