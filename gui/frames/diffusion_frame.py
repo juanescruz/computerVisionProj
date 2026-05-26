@@ -23,7 +23,7 @@ class DiffusionFrame(ctk.CTkFrame):
         self.method_var = ctk.StringVar(value="Isotrópica")
         self.method_menu = ctk.CTkOptionMenu(
             ctrl, variable=self.method_var,
-            values=["Isotrópica", "Anisotrópica (Gauss)", "Anisotrópica (Lorentz)"]
+            values=["Isotrópica", "Anisotrópica (Leclerc)", "Anisotrópica (Lorentz)"]
         )
         self.method_menu.pack(side="left", padx=5)
 

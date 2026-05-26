@@ -43,7 +43,7 @@ def _anisotropic_diffusion_gray(img: np.ndarray, iterations: int = 20,
 
 def anisotropic_diffusion(img: np.ndarray, iterations: int = 20,
                           lambda_param: float = 0.25, k: float = 20,
-                          diffusion_type: str = "gaussian") -> np.ndarray:
+                          diffusion_type: str = "leclerc") -> np.ndarray:
     """Perona-Malik anisotropic diffusion (forces grayscale)."""
     if len(img.shape) == 3:
         img = 0.299 * img[:, :, 0] + 0.587 * img[:, :, 1] + 0.114 * img[:, :, 2]
@@ -52,7 +52,7 @@ def anisotropic_diffusion(img: np.ndarray, iterations: int = 20,
 
 def anisotropic_diffusion_color(img: np.ndarray, iterations: int = 20,
                                  lambda_param: float = 0.25, k: float = 20,
-                                 diffusion_type: str = "gaussian") -> np.ndarray:
+                                 diffusion_type: str = "leclerc") -> np.ndarray:
     """Apply anisotropic diffusion per channel to preserve color."""
     if len(img.shape) == 2:
         return _anisotropic_diffusion_gray(img, iterations, lambda_param, k, diffusion_type)
