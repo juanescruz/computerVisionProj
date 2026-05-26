@@ -45,15 +45,11 @@ class LaplacianFrame(ctk.CTkFrame):
         self.sigma_label = ctk.CTkLabel(method_frame, text="1.0", width=30)
         self.sigma_label.pack(side="left", padx=2)
 
-        ctk.CTkLabel(method_frame, text="  Umbral:").pack(side="left", padx=(10, 2))
-        self.thresh_var = ctk.IntVar(value=30)
-        self.thresh_slider = ctk.CTkSlider(
-            method_frame, from_=0, to=100,
-            variable=self.thresh_var, command=self.on_thresh_change, width=120
-        )
-        self.thresh_slider.pack(side="left", padx=2)
-        self.thresh_label = ctk.CTkLabel(method_frame, text="30", width=30)
-        self.thresh_label.pack(side="left", padx=2)
+        self.thresh_label = ctk.CTkLabel(method_frame, text="  Umbral (-1=auto):")
+        self.thresh_label.pack(side="left", padx=(10, 2))
+        self.thresh_var = ctk.StringVar(value="-1")
+        self.thresh_entry = ctk.CTkEntry(method_frame, width=60, textvariable=self.thresh_var)
+        self.thresh_entry.pack(side="left", padx=2)
 
         # Noise controls
         noise_frame = ctk.CTkFrame(self)
@@ -130,14 +126,11 @@ class LaplacianFrame(ctk.CTkFrame):
         show_thresh = sel in ("Laplaciano+Pendiente", "LoG")
         for w in [self.sigma_slider, self.sigma_label]:
             w.pack() if show_sigma else w.pack_forget()
-        for w in [self.thresh_slider, self.thresh_label]:
+        for w in [self.thresh_label, self.thresh_entry]:
             w.pack() if show_thresh else w.pack_forget()
 
     def on_sigma_change(self, v):
         self.sigma_label.configure(text=f"{v:.1f}")
-
-    def on_thresh_change(self, v):
-        self.thresh_label.configure(text=str(int(v)))
 
     def on_noise_change(self, sel):
         if sel == "Gaussiano":
@@ -200,12 +193,18 @@ class LaplacianFrame(ctk.CTkFrame):
         method = self.method_var.get()
         if img is None:
             return None
+        try:
+            thresh = float(self.thresh_var.get())
+        except ValueError:
+            thresh = -1
+        if thresh < 0:
+            thresh = None
         if method == "Laplaciano":
             return laplacian_zero_crossings(img)
         elif method == "Laplaciano+Pendiente":
-            return laplacian_with_slope(img, self.thresh_var.get())
+            return laplacian_with_slope(img, thresh)
         else:
-            return log_edge(img, self.sigma_var.get(), self.thresh_var.get())
+            return log_edge(img, self.sigma_var.get(), thresh)
 
     def detect_edges(self):
         if self.app.current_image is None:

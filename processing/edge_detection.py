@@ -137,16 +137,14 @@ def sobel_color(img: np.ndarray, method: str = "euclidean") -> np.ndarray:
 
 def _to_gray(img):
     if len(img.shape) == 3:
-        return (0.299 * img[:, :, 0] + 0.587 * img[:, :, 1] + 0.114 * img[:, :, 2]).astype(np.uint8)
+        return np.mean(img, axis=2).astype(np.uint8)
+
     return img
 
 
+
 def laplacian_zero_crossings(img: np.ndarray) -> np.ndarray:
-    """Laplacian edge detector using zero-crossing detection.
-    
-    Kernel: [[0,1,0],[1,-4,1],[0,1,0]]
-    Edge = pixel with N/S/E/O neighbor of opposite sign.
-    """
+    """Laplacian zero-crossing detector (sin umbral fijo)."""
     img = _to_gray(img)
     kernel = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]], dtype=np.float32)
     lap = convolve2d(img, kernel)
@@ -157,22 +155,32 @@ def laplacian_zero_crossings(img: np.ndarray) -> np.ndarray:
     for i in range(1, h - 1):
         for j in range(1, w - 1):
             v = lap[i, j]
-            if (v > 0 and lap[i - 1, j] < 0) or (v < 0 and lap[i - 1, j] > 0) or \
-               (v > 0 and lap[i + 1, j] < 0) or (v < 0 and lap[i + 1, j] > 0) or \
-               (v > 0 and lap[i, j - 1] < 0) or (v < 0 and lap[i, j - 1] > 0) or \
-               (v > 0 and lap[i, j + 1] < 0) or (v < 0 and lap[i, j + 1] > 0):
+            n = lap[i - 1, j]; s = lap[i + 1, j]
+            e = lap[i, j + 1]; o = lap[i, j - 1]
+
+            if v > 0 and (n < 0 or s < 0 or e < 0 or o < 0):
                 edges[i, j] = 255
+            elif v < 0 and (n > 0 or s > 0 or e > 0 or o > 0):
+                edges[i, j] = 255
+            elif v == 0:
+                if (n > 0 and s < 0) or (n < 0 and s > 0):
+                    edges[i, j] = 255
+                elif (e > 0 and o < 0) or (e < 0 and o > 0):
+                    edges[i, j] = 255
     return edges
 
 
-def laplacian_with_slope(img: np.ndarray, threshold: int = 30) -> np.ndarray:
-    """Laplacian with slope threshold.
-    
-    Zero-crossing marked only if |lap[i,j] + lap[neighbor]| > threshold.
-    """
+def laplacian_with_slope(img: np.ndarray, threshold: float = None) -> np.ndarray:
+    """Laplacian with slope evaluation. Umbral automático si threshold=None."""
     img = _to_gray(img)
-    kernel = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]], dtype=np.float32)
+    kernel = np.array([[0, 1, 0], [1, -8, 1], [0, 1, 0]], dtype=np.float32)
     lap = convolve2d(img, kernel)
+
+    if threshold is None:
+        abs_lap = np.abs(lap)
+        threshold = float(np.percentile(abs_lap, 80) * 0.25)
+        if threshold < 1:
+            threshold = 1.0
 
     h, w = lap.shape
     edges = np.zeros((h, w), dtype=np.uint8)
@@ -180,26 +188,28 @@ def laplacian_with_slope(img: np.ndarray, threshold: int = 30) -> np.ndarray:
     for i in range(1, h - 1):
         for j in range(1, w - 1):
             v = lap[i, j]
-            for di, dj in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                ni, nj = i + di, j + dj
-                nv = lap[ni, nj]
-                if (v > 0 and nv < 0) or (v < 0 and nv > 0):
-                    slope = abs(v + nv)
-                    if slope > threshold:
+
+            neighbors = [
+                lap[i, j + 1],     # Horizontal
+                lap[i + 1, j],     # Vertical
+                lap[i + 1, j + 1], # Diagonal 1
+                lap[i + 1, j - 1]  # Diagonal 2
+            ]
+
+            for neighbor_val in neighbors:
+                if (v * neighbor_val) < 0:
+                    slope = abs(v - neighbor_val)
+                    if slope >= threshold:
                         edges[i, j] = 255
                     break
     return edges
 
 
-def log_edge(img: np.ndarray, sigma: float = 1.0, threshold: int = None) -> np.ndarray:
-    """LoG (Marr-Hildreth) edge detector.
-    
-    Build LoG kernel of size 4σ+1 (odd), convolve, zero-crossing detection.
-    If threshold is set, only mark zero-crossings with slope > threshold.
-    """
+def log_edge(img: np.ndarray, sigma: float = 1.0, threshold: float = None) -> np.ndarray:
+    """LoG (Marr-Hildreth) edge detector. Umbral automático si threshold=None."""
     img = _to_gray(img)
 
-    size = int(4 * sigma + 1)
+    size = int(6 * sigma + 1)
     if size % 2 == 0:
         size += 1
     k = size // 2
@@ -215,6 +225,12 @@ def log_edge(img: np.ndarray, sigma: float = 1.0, threshold: int = None) -> np.n
 
     log_img = convolve2d(img, kernel)
 
+    if threshold is None:
+        abs_log = np.abs(log_img)
+        threshold = float(np.percentile(abs_log, 85) * 0.25)
+        if threshold < 1:
+            threshold = 1.0
+
     h, w = log_img.shape
     edges = np.zeros((h, w), dtype=np.uint8)
 
@@ -225,11 +241,8 @@ def log_edge(img: np.ndarray, sigma: float = 1.0, threshold: int = None) -> np.n
                 ni, nj = i + di, j + dj
                 nv = log_img[ni, nj]
                 if (v > 0 and nv < 0) or (v < 0 and nv > 0):
-                    if threshold is None:
+                    slope = abs(v + nv)
+                    if slope > threshold:
                         edges[i, j] = 255
-                    else:
-                        slope = abs(v + nv)
-                        if slope > threshold:
-                            edges[i, j] = 255
                     break
     return edges

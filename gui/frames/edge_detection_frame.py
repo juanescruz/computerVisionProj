@@ -64,7 +64,7 @@ class EdgeDetectionFrame(ctk.CTkFrame):
         self.mode_var = ctk.StringVar(value="Grises")
         self.mode_menu = ctk.CTkOptionMenu(
             self.button_frame,
-            values=["Grises", "Color (Euclidiano)", "Color (Máximo)"],
+            values=["Grises", "Color"],
             variable=self.mode_var,
             width=140
         )
@@ -160,7 +160,7 @@ class EdgeDetectionFrame(ctk.CTkFrame):
                 import tkinter.messagebox as msgbox
                 msgbox.showwarning("Advertencia", "No hay imagen color cargada.")
                 return
-            method = "euclidean" if mode == "Color (Euclidiano)" else "max"
+            method = "euclidean" if mode == "Color" else "max"
             self.app.processed_image = color_fn(img, method=method)
 
         self.update_display()
