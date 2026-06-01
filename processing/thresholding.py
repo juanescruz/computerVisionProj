@@ -2,7 +2,7 @@
 import numpy as np
 
 
-def iterative_threshold(img: np.ndarray, delta_T: float = 1.0) -> tuple:
+def iterative_threshold(img: np.ndarray, tolerance: float = 1.0) -> tuple:
     """Iterative optimal threshold.
     Returns: (threshold, binary_image)
     """
@@ -13,17 +13,17 @@ def iterative_threshold(img: np.ndarray, delta_T: float = 1.0) -> tuple:
     T = float(np.mean(img_flat))
 
     while True:
-        below = img_flat[img_flat < T]
-        above = img_flat[img_flat >= T]
+        G1 = img_flat[img_flat < T]
+        G2 = img_flat[img_flat >= T]
 
-        if len(below) == 0 or len(above) == 0:
+        if len(G1) == 0 or len(G2) == 0:
             break
 
-        m1 = float(np.mean(below))
-        m2 = float(np.mean(above))
+        m1 = float(np.mean(G1))
+        m2 = float(np.mean(G2))
         T_new = (m1 + m2) / 2
 
-        if abs(T_new - T) < delta_T:
+        if abs(T_new - T) < tolerance:
             break
         T = T_new
 
@@ -37,32 +37,53 @@ def otsu_threshold(img: np.ndarray) -> tuple:
     """
     if len(img.shape) == 3:
         img = 0.299 * img[:, :, 0] + 0.587 * img[:, :, 1] + 0.114 * img[:, :, 2]
+        
+    hist = np.histogram(img.ravel(), bins=256, range=(0, 256))[0]
 
-    hist = np.bincount(img.ravel().astype(np.int32), minlength=256)
-    total = hist.sum()
-    if total == 0:
-        return 128, np.zeros_like(img)
+    total = img.size
 
-    p = hist / total
-    m_G = float(np.sum(np.arange(256) * p))
+    sum_total = np.sum(np.arange(256) * hist)
 
-    best_t = 0
-    max_var = 0.0
-    P1 = 0.0
-    m_t = 0.0
+    sum_background = 0
+    weight_background = 0
 
+    max_variance = 0
+    threshold = 0
+
+    # Evaluate all possible thresholds
     for t in range(256):
-        P1 += p[t]
-        if P1 <= 0 or P1 >= 1:
-            continue
-        m_t += t * p[t]
-        var = (m_G * P1 - m_t) ** 2 / (P1 * (1 - P1))
-        if var > max_var:
-            max_var = var
-            best_t = t
 
-    binary = np.where(img >= best_t, 255, 0).astype(np.uint8)
-    return best_t, binary
+        weight_background += hist[t]
+
+        if weight_background == 0:
+            continue
+
+        weight_foreground = total - weight_background
+
+        if weight_foreground == 0:
+            break
+
+        sum_background += t * hist[t]
+
+        mean_background = sum_background / weight_background
+
+        mean_foreground = (
+            sum_total - sum_background
+        ) / weight_foreground
+
+        variance_between = (
+            weight_background *
+            weight_foreground *
+            (mean_background - mean_foreground) ** 2
+        )
+
+        if variance_between > max_variance:
+            max_variance = variance_between
+            threshold = t
+
+    binary = np.where(img > threshold, 255, 0).astype(np.uint8)
+
+    return threshold, binary
 
 
 def otsu_rgb_segmentation(img: np.ndarray) -> np.ndarray:

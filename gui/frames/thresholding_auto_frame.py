@@ -25,18 +25,19 @@ class ThresholdingAutoFrame(ctk.CTkFrame):
         ctk.CTkLabel(ctrl, text="Método:").pack(side="left", padx=5)
         self.method_var = ctk.StringVar(value="Iterativo")
         self.method_menu = ctk.CTkOptionMenu(
-            ctrl, variable=self.method_var,
-            values=["Iterativo", "Otsu", "Otsu por Bandas (Color)"]
+            ctrl,
+            variable=self.method_var,
+            values=["Iterativo", "Otsu", "Otsu por Bandas (Color)"],
+            command=self._on_method_change
         )
         self.method_menu.pack(side="left", padx=5)
 
-        ctk.CTkLabel(ctrl, text="  ΔT:").pack(side="left", padx=(10, 2))
+        self.delta_label = ctk.CTkLabel(ctrl, text="  ΔT:")
+        self.delta_label.pack(side="left", padx=(10, 2))
+
         self.delta_entry = ctk.CTkEntry(ctrl, width=50)
         self.delta_entry.insert(0, "1")
         self.delta_entry.pack(side="left", padx=2)
-
-        self.threshold_display = ctk.CTkLabel(ctrl, text="Umbral: --", width=200)
-        self.threshold_display.pack(side="left", padx=10)
 
         # Noise controls
         nf = ctk.CTkFrame(self)
@@ -99,9 +100,20 @@ class ThresholdingAutoFrame(ctk.CTkFrame):
             lbl = ctk.CTkLabel(f, text="Sin imagen", text_color="gray")
             lbl.pack(expand=True, pady=5)
             self._labels[title] = lbl
+        self._on_method_change(self.method_var.get())
 
     def _on_pct_change(self, v):
         self.pct_label.configure(text=f"{int(v)}%")
+        
+    def _on_method_change(self, method):
+        if method == "Iterativo":
+            if not self.delta_label.winfo_ismapped():
+                self.delta_label.pack(side="left", padx=(10, 2))
+                self.delta_entry.pack(side="left", padx=2)
+
+        else:
+            self.delta_label.pack_forget()
+            self.delta_entry.pack_forget()
 
     def _show(self, img, title):
         if img is None:
@@ -202,10 +214,6 @@ class ThresholdingAutoFrame(ctk.CTkFrame):
                 bin_noisy = None
                 t_noisy = "--"
 
-            self.threshold_display.configure(
-                text=f"Umbral: limpia={t_clean} | ruidosa={t_noisy}"
-            )
-
             self._show(bin_clean, "Umbral (limpia)")
             if bin_noisy is not None:
                 self._show(bin_noisy, "Umbral (ruidosa)")
@@ -225,7 +233,6 @@ class ThresholdingAutoFrame(ctk.CTkFrame):
             self.original_image = None
             self.noisy_image = None
             self.status_label.configure(text="Sin imagen", text_color="gray")
-            self.threshold_display.configure(text="Umbral: --")
             return
         if self.app.current_image_color is not None:
             self.original_image = self.app.current_image_color.copy()
@@ -236,4 +243,3 @@ class ThresholdingAutoFrame(ctk.CTkFrame):
             self._labels[t].configure(image=None, text="Sin resultado", text_color="gray")
         self._show(self.original_image, "Original")
         self.status_label.configure(text="Listo", text_color="green")
-        self.threshold_display.configure(text="Umbral: --")
