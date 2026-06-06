@@ -170,7 +170,7 @@ class EdgeDetectionFrame(ctk.CTkFrame):
 
     def apply_sobel(self):
         self._select_operator(sobel_operator, sobel_color)
-        
+
     def reset_image(self):
 
         self.app.processed_image = None

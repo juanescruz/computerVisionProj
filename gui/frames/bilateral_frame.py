@@ -77,7 +77,7 @@ class BilateralFrame(ctk.CTkFrame):
         ctk.CTkLabel(nf, text="Ruido:").pack(side="left", padx=5)
         self.noise_var = ctk.StringVar(value="Gaussiano")
         self.noise_menu = ctk.CTkOptionMenu(
-            nf, variable=self.noise_var, values=["Gaussiano", "Sal y Pimienta"]
+            nf, variable=self.noise_var, values=["Gaussiano", "Sal y Pimienta"], command=self.on_noise_change
         )
         self.noise_menu.pack(side="left", padx=5)
 
@@ -89,6 +89,14 @@ class BilateralFrame(ctk.CTkFrame):
         self.pct_slider.pack(side="left", padx=2)
         self.pct_label = ctk.CTkLabel(nf, text="10%", width=30)
         self.pct_label.pack(side="left", padx=2)
+        
+        self.mean_label = ctk.CTkLabel(nf, text="μ (mean):")
+        self.mean_label.pack(side="left", padx=(10, 2))
+        self.mean_entry = ctk.CTkEntry(nf, width=50)
+        self.mean_entry.insert(0, "0")
+        self.mean_entry.pack(side="left", padx=2)
+        
+        self.on_noise_change(self.noise_var.get())
 
         ctk.CTkLabel(nf, text="  σ/p:").pack(side="left", padx=(10, 2))
         self.noise_param_entry = ctk.CTkEntry(nf, width=50)
@@ -151,6 +159,16 @@ class BilateralFrame(ctk.CTkFrame):
     def _on_pct_change(self, v):
         self.pct_label.configure(text=f"{int(v)}%")
 
+    def on_noise_change(self, selection):
+        if selection == "Gaussiano":
+            self.mean_label.pack(side="left", padx=(10, 2))
+            self.mean_entry.pack(side="left", padx=2)
+
+        else:  # Sal y Pimienta
+            self.mean_label.pack_forget()
+            self.mean_entry.pack_forget()
+            
+            
     def _show(self, img, title):
         if img is None:
             return
@@ -171,8 +189,10 @@ class BilateralFrame(ctk.CTkFrame):
         noise_type = self.noise_var.get()
         pct = self.pct_slider.get() / 100.0
         try:
+            mean = float(self.mean_entry.get() or "0")
             param = float(self.noise_param_entry.get() or "25")
         except ValueError:
+            mean = 0.0
             param = 25.0
 
         try:
@@ -180,10 +200,13 @@ class BilateralFrame(ctk.CTkFrame):
                 add_gaussian_noise, add_salt_pepper_noise
             )
             if noise_type == "Gaussiano":
+                mean = float(self.mean_entry.get() or "0")
+                param  = float(self.noise_param_entry.get() or "25")
                 self.noisy_image = add_gaussian_noise(
-                    self.original_image, pct, 0, param
+                    self.original_image, pct, mean, param
                 )
             else:
+                param = float(self.noise_param_entry.get() or "5")
                 self.noisy_image = add_salt_pepper_noise(
                     self.original_image, param / 100
                 )
