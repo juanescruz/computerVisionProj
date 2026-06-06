@@ -19,6 +19,7 @@ from gui.frames.laplacian_frame import LaplacianFrame
 from gui.frames.diffusion_frame import DiffusionFrame
 from gui.frames.bilateral_frame import BilateralFrame
 from gui.frames.thresholding_auto_frame import ThresholdingAutoFrame
+from gui.frames.canny_frame import CannyFrame
 
 
 class App(ctk.CTk):
@@ -45,12 +46,13 @@ class App(ctk.CTk):
         self.tab_contamination = self.tabview.add("Contaminar")
         self.tab_filters = self.tabview.add("Filtros")
         self.tab_experimentation = self.tabview.add("Experimentación")
-        self.tab_edge_detection = self.tabview.add("Detección de Bordes")
+        self.tab_edge_detection = self.tabview.add("Detección de Bordes Clásica")
         self.tab_edge_noise = self.tabview.add("Ruido + Bordes")
         self.tab_laplacian = self.tabview.add("Laplaciano con Ruido")
         self.tab_diffusion = self.tabview.add("Difusión")
         self.tab_bilateral = self.tabview.add("Filtro Bilateral")
         self.tab_thresholding_auto = self.tabview.add("Umbralización Automática")
+        self.tab_canny = self.tabview.add("Canny")
         
         self.frames = {}
         self.frames["home"] = HomeFrame(self.tab_home, self)
@@ -69,6 +71,7 @@ class App(ctk.CTk):
         self.frames["diffusion"] = DiffusionFrame(self.tab_diffusion, self)
         self.frames["bilateral"] = BilateralFrame(self.tab_bilateral, self)
         self.frames["thresholding_auto"] = ThresholdingAutoFrame(self.tab_thresholding_auto, self)
+        self.frames["canny"] = CannyFrame(self.tab_canny, self)
         
         for frame in self.frames.values():
             frame.pack(fill="both", expand=True)
