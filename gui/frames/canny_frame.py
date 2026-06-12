@@ -2,7 +2,7 @@
 import customtkinter as ctk
 import numpy as np
 
-from processing.edge_detection import canny_edge_detector
+from processing.advanced_edge_detection import canny_edge_detector
 from processing.noise_contamination import (
     add_gaussian_noise, add_exponential_noise, add_rayleigh_noise,
     add_salt_pepper_noise
