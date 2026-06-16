@@ -21,6 +21,7 @@ from gui.frames.bilateral_frame import BilateralFrame
 from gui.frames.thresholding_auto_frame import ThresholdingAutoFrame
 from gui.frames.canny_frame import CannyFrame
 from gui.frames.susan_frame import SusanFrame
+from gui.frames.hough_frame import HoughFrame
 
 
 class App(ctk.CTk):
@@ -55,6 +56,7 @@ class App(ctk.CTk):
         self.tab_thresholding_auto = self.tabview.add("Umbralización Automática")
         self.tab_canny = self.tabview.add("Canny")
         self.tab_susan = self.tabview.add("SUSAN")
+        self.tab_hough = self.tabview.add("Hough")
         
         self.frames = {}
         self.frames["home"] = HomeFrame(self.tab_home, self)
@@ -75,6 +77,7 @@ class App(ctk.CTk):
         self.frames["thresholding_auto"] = ThresholdingAutoFrame(self.tab_thresholding_auto, self)
         self.frames["canny"] = CannyFrame(self.tab_canny, self)
         self.frames["susan"] = SusanFrame(self.tab_susan, self)
+        self.frames["hough"] = HoughFrame(self.tab_hough, self)
         
         for frame in self.frames.values():
             frame.pack(fill="both", expand=True)
