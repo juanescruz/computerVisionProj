@@ -22,6 +22,8 @@ from gui.frames.thresholding_auto_frame import ThresholdingAutoFrame
 from gui.frames.canny_frame import CannyFrame
 from gui.frames.susan_frame import SusanFrame
 from gui.frames.hough_frame import HoughFrame
+from gui.frames.active_contours_frame import ActiveContoursFrame
+from gui.frames.video_tracking_frame import VideoTrackingFrame
 
 
 class App(ctk.CTk):
@@ -57,6 +59,8 @@ class App(ctk.CTk):
         self.tab_canny = self.tabview.add("Canny")
         self.tab_susan = self.tabview.add("SUSAN")
         self.tab_hough = self.tabview.add("Hough")
+        self.tab_active_contours = self.tabview.add("Contornos Activos")
+        self.tab_video = self.tabview.add("Seguimiento Video")
         
         self.frames = {}
         self.frames["home"] = HomeFrame(self.tab_home, self)
@@ -78,6 +82,8 @@ class App(ctk.CTk):
         self.frames["canny"] = CannyFrame(self.tab_canny, self)
         self.frames["susan"] = SusanFrame(self.tab_susan, self)
         self.frames["hough"] = HoughFrame(self.tab_hough, self)
+        self.frames["active_contours"] = ActiveContoursFrame(self.tab_active_contours, self)
+        self.frames["video"] = VideoTrackingFrame(self.tab_video, self)
         
         for frame in self.frames.values():
             frame.pack(fill="both", expand=True)
