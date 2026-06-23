@@ -1,4 +1,6 @@
 """SUSAN edge & corner detector frame."""
+import os
+import cv2
 import customtkinter as ctk
 import numpy as np
 
@@ -227,6 +229,7 @@ class SusanFrame(ctk.CTkFrame):
         self.info_label.configure(
             text=f"SUSAN t={t:.0f}", text_color="green"
         )
+        self._guardar_resultados_susan(t)
 
     def reset_all(self):
         self.noisy_image = None
@@ -271,6 +274,31 @@ class SusanFrame(ctk.CTkFrame):
         self._show_in_panel(
             self._make_overlay(gray_noisy, self._corners_noisy, (255, 0, 0)), "corners_noisy"
         )
+
+    def _guardar_resultados_susan(self, t):
+        base = os.path.join("resultados", "SUSAN")
+        os.makedirs(base, exist_ok=True)
+        gray_rgb = np.stack([self.app.current_image]*3, axis=2).astype(np.uint8)
+        cv2.imwrite(os.path.join(base, "original.png"),
+                    cv2.cvtColor(gray_rgb, cv2.COLOR_RGB2BGR))
+        if self.noisy_image is not None:
+            noisy_rgb = np.stack([self.noisy_image]*3, axis=2).astype(np.uint8)
+            cv2.imwrite(os.path.join(base, "ruido.png"),
+                        cv2.cvtColor(noisy_rgb, cv2.COLOR_RGB2BGR))
+        edges_rgb = _overlay_marks(self.app.current_image, self._edges_orig, (0, 255, 0))
+        cv2.imwrite(os.path.join(base, f"bordes_original_t{t:.0f}.png"),
+                    cv2.cvtColor(edges_rgb, cv2.COLOR_RGB2BGR))
+        corners_rgb = _overlay_marks(self.app.current_image, self._corners_orig, (255, 0, 0))
+        cv2.imwrite(os.path.join(base, f"esquinas_original_t{t:.0f}.png"),
+                    cv2.cvtColor(corners_rgb, cv2.COLOR_RGB2BGR))
+        if self._edges_noisy is not None:
+            edges_n_rgb = _overlay_marks(self.noisy_image, self._edges_noisy, (0, 255, 0))
+            cv2.imwrite(os.path.join(base, f"bordes_ruido_t{t:.0f}.png"),
+                        cv2.cvtColor(edges_n_rgb, cv2.COLOR_RGB2BGR))
+        if self._corners_noisy is not None:
+            corners_n_rgb = _overlay_marks(self.noisy_image, self._corners_noisy, (255, 0, 0))
+            cv2.imwrite(os.path.join(base, f"esquinas_ruido_t{t:.0f}.png"),
+                        cv2.cvtColor(corners_n_rgb, cv2.COLOR_RGB2BGR))
 
     def update_display(self):
         if self.app.current_image is None:

@@ -1,4 +1,6 @@
 """Hough Transform frame — line detection with noise comparison."""
+import os
+import cv2
 import customtkinter as ctk
 import numpy as np
 
@@ -49,7 +51,8 @@ class HoughFrame(ctk.CTkFrame):
 
         ctk.CTkLabel(self.noise_frame, text="%:").pack(side="left", padx=(8, 2))
         self.noise_pct = ctk.CTkSlider(
-            self.noise_frame, from_=0, to=100, number_of_steps=100, width=90
+            self.noise_frame, from_=0, to=100, number_of_steps=100, width=90,
+            command=lambda v: self.noise_pct_label.configure(text=f"{int(v)}%")
         )
         self.noise_pct.set(10)
         self.noise_pct.pack(side="left", padx=2)
@@ -197,6 +200,7 @@ class HoughFrame(ctk.CTkFrame):
             self.info_label.configure(text=f"Erro: {e}", text_color="red")
             return
         self._show_panels()
+        self._guardar_resultados_hough()
 
     def reset_all(self):
         self.noisy_image = None
@@ -226,6 +230,23 @@ class HoughFrame(ctk.CTkFrame):
             self._show_in_panel(None, "noisy")
         self._show_in_panel(self._hough_orig, "hough_orig")
         self._show_in_panel(self._hough_noisy, "hough_noisy")
+
+    def _guardar_resultados_hough(self):
+        base = os.path.join("resultados", "Hough")
+        os.makedirs(base, exist_ok=True)
+        gray_rgb = np.stack([self.app.current_image]*3, axis=2).astype(np.uint8)
+        cv2.imwrite(os.path.join(base, "original.png"),
+                    cv2.cvtColor(gray_rgb, cv2.COLOR_RGB2BGR))
+        if self.noisy_image is not None:
+            noisy_rgb = np.stack([self.noisy_image]*3, axis=2).astype(np.uint8)
+            cv2.imwrite(os.path.join(base, "ruido.png"),
+                        cv2.cvtColor(noisy_rgb, cv2.COLOR_RGB2BGR))
+        if self._hough_orig is not None:
+            cv2.imwrite(os.path.join(base, "hough_original.png"),
+                        cv2.cvtColor(self._hough_orig, cv2.COLOR_RGB2BGR))
+        if self._hough_noisy is not None:
+            cv2.imwrite(os.path.join(base, "hough_ruido.png"),
+                        cv2.cvtColor(self._hough_noisy, cv2.COLOR_RGB2BGR))
 
     def update_display(self):
         if self.app.current_image is None:

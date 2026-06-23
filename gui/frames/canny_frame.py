@@ -1,4 +1,6 @@
 """Dedicated Canny frame with noise and 4-way comparison."""
+import os
+import cv2
 import customtkinter as ctk
 import numpy as np
 
@@ -212,6 +214,7 @@ class CannyFrame(ctk.CTkFrame):
             text=f"Canny σ={sigma:.1f}  Low={low:.0f}  High={high:.0f}",
             text_color="green"
         )
+        self._guardar_resultados_canny(sigma, low, high)
 
     def reset_all(self):
         self.noisy_image = None
@@ -237,6 +240,25 @@ class CannyFrame(ctk.CTkFrame):
         self._show_image_in_panel(self._canny_original, "canny_orig")
         self._show_image_in_panel(self.noisy_image, "noisy")
         self._show_image_in_panel(self._canny_noisy, "canny_noisy")
+
+    def _guardar_resultados_canny(self, sigma, low, high):
+        base = os.path.join("resultados", "Canny")
+        os.makedirs(base, exist_ok=True)
+        tag = f"sigma{sigma:.1f}_low{low:.0f}_high{high:.0f}"
+        cv2.imwrite(os.path.join(base, f"original.png"),
+                    cv2.cvtColor(self.app.current_image_color, cv2.COLOR_RGB2BGR)
+                    if self.app.current_image_color is not None
+                    else cv2.cvtColor(
+                        np.stack([self.app.current_image]*3, axis=2).astype(np.uint8),
+                        cv2.COLOR_RGB2BGR))
+        if self.noisy_image is not None:
+            cv2.imwrite(os.path.join(base, f"ruido.png"),
+                        cv2.cvtColor(
+                            np.stack([self.noisy_image]*3, axis=2).astype(np.uint8),
+                            cv2.COLOR_RGB2BGR))
+        cv2.imwrite(os.path.join(base, f"canny_original_{tag}.png"), self._canny_original)
+        if self._canny_noisy is not None:
+            cv2.imwrite(os.path.join(base, f"canny_ruido_{tag}.png"), self._canny_noisy)
 
     def update_display(self):
         if self.app.current_image is None:
