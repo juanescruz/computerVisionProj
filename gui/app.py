@@ -24,6 +24,7 @@ from gui.frames.susan_frame import SusanFrame
 from gui.frames.hough_frame import HoughFrame
 from gui.frames.active_contours_frame import ActiveContoursFrame
 from gui.frames.video_tracking_frame import VideoTrackingFrame
+from gui.frames.sift_frame import SiftFrame
 
 
 class App(ctk.CTk):
@@ -55,12 +56,13 @@ class App(ctk.CTk):
         #self.tab_laplacian = self.tabview.add("Laplaciano con Ruido")
         #self.tab_diffusion = self.tabview.add("Difusión")
         #self.tab_bilateral = self.tabview.add("Filtro Bilateral")
-        self.tab_thresholding_auto = self.tabview.add("Umbralización Automática")
-        self.tab_canny = self.tabview.add("Canny")
-        self.tab_susan = self.tabview.add("SUSAN")
-        self.tab_hough = self.tabview.add("Hough")
-        self.tab_active_contours = self.tabview.add("Contornos Activos")
-        self.tab_video = self.tabview.add("Seguimiento Video")
+        #self.tab_thresholding_auto = self.tabview.add("Umbralización Automática")
+        #self.tab_canny = self.tabview.add("Canny")
+        #self.tab_susan = self.tabview.add("SUSAN")
+        #self.tab_hough = self.tabview.add("Hough")
+        #self.tab_active_contours = self.tabview.add("Contornos Activos")
+        #self.tab_video = self.tabview.add("Seguimiento Video")
+        self.tab_sift = self.tabview.add("SIFT")
         
         self.frames = {}
         self.frames["home"] = HomeFrame(self.tab_home, self)
@@ -78,12 +80,13 @@ class App(ctk.CTk):
         ##self.frames["laplacian"] = LaplacianFrame(self.tab_laplacian, self)
         ##self.frames["diffusion"] = DiffusionFrame(self.tab_diffusion, self)
         #self.frames["bilateral"] = BilateralFrame(self.tab_bilateral, self)
-        self.frames["thresholding_auto"] = ThresholdingAutoFrame(self.tab_thresholding_auto, self)
-        self.frames["canny"] = CannyFrame(self.tab_canny, self)
-        self.frames["susan"] = SusanFrame(self.tab_susan, self)
-        self.frames["hough"] = HoughFrame(self.tab_hough, self)
-        self.frames["active_contours"] = ActiveContoursFrame(self.tab_active_contours, self)
-        self.frames["video"] = VideoTrackingFrame(self.tab_video, self)
+        #self.frames["thresholding_auto"] = ThresholdingAutoFrame(self.tab_thresholding_auto, self)
+        #self.frames["canny"] = CannyFrame(self.tab_canny, self)
+        #self.frames["susan"] = SusanFrame(self.tab_susan, self)
+        #self.frames["hough"] = HoughFrame(self.tab_hough, self)
+        #self.frames["active_contours"] = ActiveContoursFrame(self.tab_active_contours, self)
+        #self.frames["video"] = VideoTrackingFrame(self.tab_video, self)
+        self.frames["sift"] = SiftFrame(self.tab_sift, self)
         
         for frame in self.frames.values():
             frame.pack(fill="both", expand=True)

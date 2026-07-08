@@ -191,7 +191,7 @@ def _susan_response(img: np.ndarray, t: float = 15) -> np.ndarray:
             for dy, dx in offsets:
                 neighbor = img[i + dy, j + dx] # Calcula la posición del vecino utilizando los desplazamientos
 
-                if abs(neighbor - nucleus) < t:
+                if abs(neighbor - nucleus) < t: 
                     n += 1
 
             # Respuesta SUSAN (borde, esquina o fondo)
