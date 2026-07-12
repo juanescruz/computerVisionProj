@@ -24,34 +24,56 @@ def detect_sift(img: np.ndarray):
     keypoints, descriptors = sift.detectAndCompute(gray, None)
     return keypoints, descriptors
 
-
-def match_features(desc1: np.ndarray, desc2: np.ndarray,
+def match_features(desc1: np.ndarray,
+                   desc2: np.ndarray,
                    ratio_thresh: float = 0.75):
-    """Match SIFT descriptors using Lowe's ratio test.
-    
-    Parameters:
-    - desc1: descriptors from image 1 (N, 128)
-    - desc2: descriptors from image 2 (M, 128)
-    - ratio_thresh: Lowe's ratio threshold for good matches
-    
-    Returns:
-    - good_matches: list of cv2.DMatch passing ratio test
-    - all_matches: list of all cv2.DMatch (before ratio test)
     """
+    Manual matching of SIFT descriptors using Euclidean distance
+    and Lowe's ratio test.
+
+    Returns:
+    - good_matches: matches approved by the ratio test
+    - all_matches: best match found for each descriptor
+    """
+
+    # Check if descriptors are valid, if not, return empty lists
     if desc1 is None or desc2 is None or len(desc1) == 0 or len(desc2) == 0:
         return [], []
 
-    bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
-    knn_matches = bf.knnMatch(desc1, desc2, k=2)
-
     all_matches = []
     good_matches = []
-    for pair in knn_matches:
-        if len(pair) >= 2:
-            m, n = pair[0], pair[1]
-            all_matches.append(m)
-            if m.distance < ratio_thresh * n.distance:
-                good_matches.append(m)
+
+    # Iterate over each descriptor in the first image
+    for i, d1 in enumerate(desc1):
+
+        # Compute Euclidean distances to all descriptors in the second image
+        distances = np.linalg.norm(desc2 - d1, axis=1)
+
+        # Sort indices of distances to find the best and second-best matches
+        idx = np.argsort(distances)
+        if len(idx) < 2:
+            continue
+
+        best = idx[0]
+        second = idx[1]
+
+        # Create the best match
+        match = cv2.DMatch(
+            _queryIdx=i,
+            _trainIdx=int(best),
+            _imgIdx=0,
+            _distance=float(distances[best])
+        )
+
+        all_matches.append(match)
+
+        # Apply Lowe's ratio test to determine if the match is good
+        if distances[best] < ratio_thresh * distances[second]:
+            good_matches.append(match)
+
+    # Sort matches by distance for better visualization
+    all_matches.sort(key=lambda m: m.distance)
+    good_matches.sort(key=lambda m: m.distance)
 
     return good_matches, all_matches
 
@@ -78,8 +100,10 @@ def draw_matches(img1: np.ndarray, kp1, img2: np.ndarray, kp2,
     else:
         rgb2 = img2.copy()
 
+    # When the distance is smaller, the similarity between the SIFT descriptors is greater.
     matches = sorted(matches, key=lambda m: m.distance)
 
+    # Limit the number of correspondences shown to facilitate visualization.
     if len(matches) > max_matches:
         matches = matches[:max_matches]
 
