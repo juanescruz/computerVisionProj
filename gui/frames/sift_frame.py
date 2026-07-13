@@ -1,7 +1,10 @@
 """SIFT feature matching frame with transformations and 2-image support."""
+import os
 import customtkinter as ctk
 import numpy as np
+import cv2
 from tkinter import filedialog
+from datetime import datetime
 
 from processing.feature_matching import (
     detect_sift, match_features, draw_keypoints, draw_matches,
@@ -25,6 +28,11 @@ class SiftFrame(ctk.CTkFrame):
         self._matches = None
         self._match_vis = None
         self._transform_applied = "nenhuma"
+        self._export_ref = None
+        self._export_query = None
+        self._export_kp_ref = None
+        self._export_kp_query = None
+        self._export_match = None
 
         self.scroll = ctk.CTkScrollableFrame(self)
         self.scroll.pack(fill="both", expand=True)
@@ -99,6 +107,12 @@ class SiftFrame(ctk.CTkFrame):
             self.tf_frame, text="Reset", command=self.reset_all, width=80
         )
         self.btn_reset.pack(side="left", padx=5)
+
+        self.btn_export = ctk.CTkButton(
+            self.tf_frame, text="Exportar", command=self.exportar_resultados,
+            width=80, fg_color="gray"
+        )
+        self.btn_export.pack(side="left", padx=5)
 
         self.info_label = ctk.CTkLabel(self.tf_frame, text="", text_color="gray")
         self.info_label.pack(side="left", padx=5)
@@ -274,9 +288,15 @@ class SiftFrame(ctk.CTkFrame):
                  f"Matches: {n_matches}/{n_all}  ({ratio:.1f}%)"
         )
 
+        # Store for export
+        self._export_ref = ref.copy()
+        self._export_query = self.query_image.copy()
+
         # Visualizations
         kp_ref_rgb = draw_keypoints(ref, self._kp_ref)
         kp_query_rgb = draw_keypoints(self.query_image, self._kp_query)
+        self._export_kp_ref = kp_ref_rgb.copy()
+        self._export_kp_query = kp_query_rgb.copy()
 
         # Match visualization
         if self._matches and len(self._matches) > 0:
@@ -284,6 +304,7 @@ class SiftFrame(ctk.CTkFrame):
                 ref, self._kp_ref, self.query_image, self._kp_query,
                 self._matches
             )
+            self._export_match = self._match_vis.copy()
             h, w = self._match_vis.shape[:2]
             scale = min(1200 / w, 900 / h, 1.0)
             disp_w = int(w * scale)
@@ -329,6 +350,63 @@ class SiftFrame(ctk.CTkFrame):
         panel["label"].configure(image=ctk_img, text="")
         panel["label"].image = ctk_img
 
+    def _descripcion_carpeta(self):
+        partes = []
+        if self._loaded_query_path:
+            fname = self._loaded_query_path.replace("\\", "/").split("/")[-1]
+            fname = os.path.splitext(fname)[0]
+            partes.append(f"2img_{fname}")
+        elif self._transform_applied != "nenhuma":
+            partes.append(self._transform_applied.lower().replace(" ", "_").replace("ó", "o"))
+        else:
+            partes.append("sin_transformacion")
+        if self.noise_both_var.get():
+            partes.append("ruido_ambas")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        partes.append(timestamp)
+        return "_".join(partes)
+
+    def _make_square(self, img_rgb, side=512):
+        h, w = img_rgb.shape[:2]
+        if h == w == side:
+            return img_rgb.copy()
+        max_side = max(h, w, side)
+        top = (max_side - h) // 2
+        bottom = max_side - h - top
+        left = (max_side - w) // 2
+        right = max_side - w - left
+        squared = cv2.copyMakeBorder(img_rgb, top, bottom, left, right,
+                                     cv2.BORDER_CONSTANT, value=[0, 0, 0])
+        if max_side != side:
+            squared = cv2.resize(squared, (side, side), interpolation=cv2.INTER_LANCZOS4)
+        return squared
+
+    def exportar_resultados(self):
+        if self._export_ref is None:
+            self.info_label.configure(text="No hay resultados para exportar", text_color="red")
+            return
+        base = os.path.join("resultados", "SIFT")
+        os.makedirs(base, exist_ok=True)
+        folder = self._descripcion_carpeta()
+        out_dir = os.path.join(base, folder)
+        os.makedirs(out_dir, exist_ok=True)
+
+        def save(img, name):
+            if img is None:
+                return
+            path = os.path.join(out_dir, name)
+            cv2.imwrite(path, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+
+        save(self._make_square(self._export_ref), "01_referencia.png")
+        save(self._make_square(self._export_query), "02_consulta.png")
+        save(self._make_square(self._export_kp_ref), "03_keypoints_referencia.png")
+        save(self._make_square(self._export_kp_query), "04_keypoints_consulta.png")
+        if self._export_match is not None:
+            save(self._export_match, "05_correspondencias.png")
+
+        self.info_label.configure(
+            text=f"Exportado a: resultados/SIFT/{folder}", text_color="green")
+
     def reset_all(self):
         self.query_image = None
         self._kp_ref = None
@@ -337,6 +415,11 @@ class SiftFrame(ctk.CTkFrame):
         self._desc_query = None
         self._matches = None
         self._match_vis = None
+        self._export_ref = None
+        self._export_query = None
+        self._export_kp_ref = None
+        self._export_kp_query = None
+        self._export_match = None
         self.match_label.configure(image=None, text="Sin correspondencias", text_color="gray")
         self.stats_label.configure(text="")
         self.info_label.configure(text="")
