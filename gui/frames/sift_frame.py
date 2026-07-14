@@ -192,39 +192,53 @@ class SiftFrame(ctk.CTkFrame):
             self.param2_label.configure(text="")
             self.param2_entry.configure(state="disabled")
             self.noise_both_cb.configure(state="disabled")
+            self.hide_param2()
         elif selection == "Escala":
             self.param1_label.configure(text="Fator:")
             self.param1_entry.delete(0, "end"); self.param1_entry.insert(0, "0.5")
             self.param2_label.configure(text="")
             self.param2_entry.configure(state="disabled")
             self.noise_both_cb.configure(state="disabled")
+            self.hide_param2()
         elif selection == "Traslación":
             self.param1_label.configure(text="dx:")
             self.param1_entry.delete(0, "end"); self.param1_entry.insert(0, "20")
             self.param2_label.configure(text="dy:")
             self.param2_entry.delete(0, "end"); self.param2_entry.insert(0, "15")
             self.noise_both_cb.configure(state="disabled")
+            self.show_param2()
         elif selection == "Iluminación":
             self.param1_label.configure(text="Alpha:")
             self.param1_entry.delete(0, "end"); self.param1_entry.insert(0, "0.6")
             self.param2_label.configure(text="Beta:")
             self.param2_entry.delete(0, "end"); self.param2_entry.insert(0, "30")
             self.noise_both_cb.configure(state="disabled")
+            self.show_param2()
         elif selection == "Perspectiva":
             self.param1_label.configure(text="Skew:")
             self.param1_entry.delete(0, "end"); self.param1_entry.insert(0, "0.2")
             self.param2_label.configure(text="")
             self.param2_entry.configure(state="disabled")
             self.noise_both_cb.configure(state="disabled")
+            self.hide_param2()
         elif selection == "Ruído Gaussiano":
             self.param1_label.configure(text="σ:")
             self.param1_entry.delete(0, "end"); self.param1_entry.insert(0, "30")
             self.param2_label.configure(text="")
             self.param2_entry.configure(state="disabled")
+            self.hide_param2()
 
     def _get_ref(self):
         return (self.app.current_image_color if self.app.current_image_color is not None
                 else self.app.current_image)
+        
+    def hide_param2(self):
+        self.param2_label.pack_forget()
+        self.param2_entry.pack_forget()
+
+    def show_param2(self):
+        self.param2_label.pack(side="left", padx=(8, 2), before=self.noise_both_cb)
+        self.param2_entry.pack(side="left", padx=2, before=self.noise_both_cb)
 
     def _build_query(self, img):
         if not self.apply_tf_var.get():
